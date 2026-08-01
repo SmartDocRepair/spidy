@@ -39,27 +39,24 @@
   }
   button{ font-family:inherit; border:none; cursor:pointer; }
 
-  /* ================= console (cornice come nella foto) ================= */
-  .stage{ height:100%; display:flex; align-items:center; justify-content:center; padding:10px; }
+  /* ============ console: mappa sopra, pannello comandi sotto (come la foto) ============ */
+  .stage{ height:100%; display:flex; align-items:center; justify-content:center; padding:8px; }
   .console{
-    position:relative; width:100%; height:100%;
-    display:flex; flex-direction:column; gap:0;
+    position:relative; width:100%; height:100%; max-width:760px;
+    display:flex; flex-direction:column;
     background:var(--frame);
     border:4px solid var(--frame-edge);
-    border-radius:14px;
+    border-radius:12px;
     box-shadow:
       inset 4px 4px 0 var(--frame-hi),
       inset -4px -4px 0 var(--frame-lo),
       0 0 0 3px #10132e, 0 14px 40px rgba(0,0,0,.6);
-    padding:14px;
-  }
-  @media (orientation: landscape){
-    .console{ flex-direction:row; }
+    padding:12px 12px 8px;
   }
 
-  /* badge ragno che sborda dall'angolo in alto a sinistra */
+  /* badge ragno arancione: angolo in ALTO A DESTRA, sborda dalla cornice */
   .badge{
-    position:absolute; z-index:50; top:-14px; left:-10px;
+    position:absolute; z-index:960; top:-12px; right:-8px;
     width:62px; height:62px; display:grid; place-items:center;
     background:var(--orange);
     clip-path: polygon(24% 0,76% 0,100% 24%,100% 76%,76% 100%,24% 100%,0 76%,0 24%);
@@ -68,16 +65,14 @@
   }
   .badge svg{ width:40px; height:40px; }
 
-  /* ================= schermo mappa ================= */
+  /* ============ schermo mappa ============ */
   .screen{
-    position:relative; flex:1; min-height:0; min-width:0;
+    position:relative; flex:1; min-height:0;
     border:var(--px) solid var(--ink);
     box-shadow: inset 4px 4px 0 rgba(0,0,0,.4);
     background:var(--screen);
-    overflow:hidden;
   }
   #map{ position:absolute; inset:0; background:var(--screen); }
-  /* look "wireframe blu" come nella foto: indaco profondo, strade luminose */
   #map.mode-wire .leaflet-tile-pane{
     filter: sepia(.8) hue-rotate(198deg) saturate(4) brightness(.95) contrast(1.35);
     image-rendering: pixelated;
@@ -95,10 +90,10 @@
     mix-blend-mode:screen;
   }
 
-  /* righelli graduati come nella foto */
-  .ruler-v, .ruler-h{ position:absolute; z-index:820; pointer-events:none; opacity:.85; }
+  /* righello graduato lungo il bordo sinistro della mappa */
   .ruler-v{
-    left:5px; top:70px; bottom:110px; width:8px;
+    position:absolute; z-index:820; pointer-events:none; opacity:.85;
+    left:5px; top:64px; bottom:140px; width:8px;
     background:repeating-linear-gradient(180deg,#e8ecff 0 2px,transparent 2px 8px);
   }
   .ruler-v::after{
@@ -106,153 +101,135 @@
     background:repeating-linear-gradient(180deg,#e8ecff 0 2px,transparent 2px 24px);
     transform:translateX(9px);
   }
-  .ruler-h{
-    left:110px; right:190px; bottom:6px; height:8px;
-    background:repeating-linear-gradient(90deg,#e8ecff 0 2px,transparent 2px 8px);
+  /* righello sottile lungo il bordo alto */
+  .ruler-t{
+    position:absolute; z-index:820; pointer-events:none; opacity:.8;
+    top:42px; left:120px; right:70px; height:8px;
+    background:repeating-linear-gradient(90deg,#e8ecff 0 2px,transparent 2px 10px);
   }
 
-  /* HUD alto-sinistra: timer a riquadri bianchi + sfera */
-  .hud{
-    position:absolute; z-index:850; top:8px; left:22px;
-    display:flex; flex-direction:column; gap:6px; align-items:flex-start;
+  /* alto-sinistra: maschera bianca ottagonale + SMT 1 SPIDEY TRACER */
+  .mask-left{
+    position:absolute; z-index:850; top:8px; left:8px;
+    width:46px; height:46px; display:grid; place-items:center;
+    background:#dfe3f2;
+    clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+    border:3px solid var(--ink);
+  }
+  .mask-left svg{ width:32px; height:32px; }
+  .smt{
+    position:absolute; z-index:850; top:58px; left:10px;
+    color:#eef1ff; text-shadow:1px 1px 0 var(--ink);
+    font-size:9px; letter-spacing:1px; line-height:1.8;
+  }
+  .smt small{ font-size:6px; opacity:.75; letter-spacing:2px; display:block; }
+  .smt .bar{
+    height:8px; width:86px; margin-top:3px;
+    background:repeating-linear-gradient(90deg,#eef1ff 0 2px,transparent 2px 5px,#eef1ff 5px 6px,transparent 6px 10px);
+    border-left:3px solid #eef1ff; border-right:3px solid #eef1ff;
+  }
+
+  /* centro del bordo alto: timer 00:00 · maschera rossa · 00:00, sbordano sulla cornice */
+  .topcenter{
+    position:absolute; z-index:940; top:-10px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:7px;
   }
   .timer{ display:flex; gap:3px; align-items:center; }
   .timer .d{
     background:var(--paper); border:2px solid var(--ink); font-size:9px;
-    padding:5px 4px; min-width:18px; text-align:center;
+    padding:5px 4px; min-width:18px; text-align:center; border-radius:5px;
     box-shadow:2px 2px 0 rgba(0,0,0,.4);
   }
   .timer .sep{ color:#fff; font-size:9px; text-shadow:1px 1px 0 var(--ink); }
-  .timer .lab{ font-size:6px; color:#dfe4ff; text-shadow:1px 1px 0 var(--ink); margin-left:4px; }
-  .ball{
-    width:34px; height:34px; border-radius:50%;
-    background: linear-gradient(180deg, #fff 0 46%, var(--red) 46% 100%);
-    border:3px solid var(--red-lo);
-    box-shadow: inset 2px 2px 0 rgba(255,255,255,.6), 2px 2px 0 rgba(0,0,0,.4);
-    position:relative;
+  .maskred{
+    width:52px; height:52px; border-radius:50%; padding:0; flex:0 0 auto;
+    background:var(--red); border:3px solid var(--red-lo);
+    box-shadow: inset 3px 3px 0 var(--red-hi), 2px 3px 0 rgba(0,0,0,.45);
+    display:grid; place-items:center;
   }
-  .ball::after{
-    content:''; position:absolute; inset:10px; border-radius:50%;
-    background:var(--paper); border:3px solid var(--red-lo);
-  }
+  .maskred svg{ width:38px; height:38px; }
+  .maskred:active{ transform:translateY(2px); }
 
-  /* banner NEW SIGHTING (arancione, testo rosso scuro) */
+  /* banner NEW SIGHTING centrato sotto la maschera */
   .banner{
-    position:absolute; z-index:900; top:64px; left:22px;
-    transform:scale(0); transform-origin:top left;
+    position:absolute; z-index:900; top:48px; left:50%;
+    transform:translateX(-50%) scale(0); transform-origin:top center;
     background:var(--orange); color:#7a1408;
     border:var(--px) solid var(--ink);
     box-shadow: inset 3px 3px 0 var(--orange-hi), 5px 5px 0 rgba(0,0,0,.45);
-    padding:10px 12px; font-size:8px; line-height:1.8; letter-spacing:1px;
-    text-align:left; white-space:nowrap; text-transform:uppercase;
+    padding:10px 14px; font-size:8px; line-height:1.8; letter-spacing:1px;
+    text-align:center; white-space:nowrap; text-transform:uppercase;
     transition:transform .18s steps(4);
   }
-  .banner.show{ transform:scale(1); }
+  .banner.show{ transform:translateX(-50%) scale(1); }
   .banner b{ display:block; color:#8e1f16; }
 
-  /* etichetta SMT 1 / SPIDEY TRACER con codice a barre */
-  .smt{
-    position:absolute; z-index:850; left:20px; bottom:56px;
-    color:#eef1ff; text-shadow:1px 1px 0 var(--ink);
-    font-size:8px; letter-spacing:1px; line-height:1.9;
-  }
-  .smt .bar{
-    height:10px; width:92px; margin-top:4px;
-    background:repeating-linear-gradient(90deg,#eef1ff 0 2px,transparent 2px 5px,#eef1ff 5px 6px,transparent 6px 10px);
-    border-left:3px solid #eef1ff; border-right:3px solid #eef1ff;
-  }
-  .smt small{ font-size:6px; opacity:.75; letter-spacing:2px; }
-
-  /* ottagono bianco col teschio in basso a sinistra */
-  .skull{
-    position:absolute; z-index:850; left:14px; bottom:10px;
-    width:38px; height:38px; display:grid; place-items:center;
-    background:#dfe3f2;
-    clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
-    border:3px solid var(--ink); opacity:.95;
-  }
-  .skull svg{ width:24px; height:24px; }
-
-  /* tasti 0 S T che sbordano sul bordo basso della mappa */
-  .keys-float{
-    position:absolute; z-index:950; bottom:-8px; left:38%;
-    transform:translateX(-50%);
-    display:flex; gap:10px;
+  /* tasti 0/S/T in VERTICALE sul bordo sinistro + occhione sotto */
+  .keys-left{
+    position:absolute; z-index:950; left:-9px; top:34%;
+    display:flex; flex-direction:column; gap:10px; align-items:flex-start;
   }
   .key{
-    width:44px; height:48px; color:#ffd9d2; font-size:13px;
+    width:46px; height:44px; color:#ffd9d2; font-size:13px;
     background:var(--red);
-    border:var(--px) solid var(--ink); border-radius:10px 10px 14px 14px;
+    border:var(--px) solid var(--ink); border-radius:10px 12px 12px 10px;
     box-shadow: inset 3px 3px 0 var(--red-hi), inset -3px -6px 0 var(--red-lo), 3px 4px 0 rgba(0,0,0,.45);
     text-shadow:1px 1px 0 var(--red-lo);
   }
   .key:active{ transform:translateY(2px); box-shadow: inset 2px 2px 0 var(--red-lo); }
   .key.on{ outline:3px solid var(--orange); }
-
-  /* grappolo pulsantoni in basso a destra (occhi + sfera + ottagono grigio) */
-  .cluster{
-    position:absolute; z-index:950; right:-6px; bottom:-12px;
-    display:flex; align-items:flex-end; gap:6px;
-  }
   .bigeye{
-    width:64px; height:64px;
+    margin-top:8px;
+    width:58px; height:58px;
     background:var(--red); border:var(--px) solid var(--ink); border-radius:50%;
     box-shadow: inset 4px 4px 0 var(--red-hi), inset -4px -7px 0 var(--red-lo), 3px 4px 0 rgba(0,0,0,.5);
     display:grid; place-items:center; position:relative;
   }
   .bigeye::before{
-    content:''; position:absolute; top:-8px; left:4px; width:10px; height:10px;
+    content:''; position:absolute; top:-7px; right:-2px; width:11px; height:11px;
     background:#7CCB4A; clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
   }
-  .bigeye svg{ width:40px; height:40px; }
+  .bigeye svg{ width:36px; height:36px; }
   .bigeye:active{ transform:translateY(2px); }
-  .ballbtn{
-    width:44px; height:44px; border-radius:50%; padding:0;
-    background: linear-gradient(180deg, #fff 0 46%, var(--red) 46% 100%);
-    border:3px solid var(--ink);
-    box-shadow: inset 2px 2px 0 rgba(255,255,255,.7), 3px 3px 0 rgba(0,0,0,.5);
-    position:relative;
+
+  /* pupazzetto Spider-Man sull'ottagono grigio: angolo in basso a sinistra */
+  .pupo{
+    position:absolute; z-index:955; left:-10px; bottom:-10px;
+    width:74px; height:86px; background:none; padding:0;
   }
-  .ballbtn::after{
-    content:''; position:absolute; inset:13px; border-radius:50%;
-    background:var(--paper); border:3px solid var(--red-lo);
-  }
-  .ballbtn:active{ transform:translateY(2px); }
-  .octo{
-    width:46px; height:46px; display:grid; place-items:center;
+  .pupo .octobg{
+    position:absolute; left:6px; bottom:0;
+    width:62px; height:62px;
     background:var(--grey-hi);
     clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
     border:3px solid var(--ink);
     box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--grey-lo);
-    color:var(--red); font-size:14px; position:relative;
   }
-  .octo::before{
-    content:''; position:absolute; right:6px; top:9px; width:6px; height:6px;
-    background:var(--red); box-shadow:0 10px 0 var(--red); border-radius:1px;
+  .pupo .octobg::before{
+    content:'+'; position:absolute; right:8px; top:6px;
+    color:var(--red); font-size:13px; font-family:'Press Start 2P',monospace;
   }
-  .octo:active{ transform:translateY(2px); }
+  .pupo .octobg::after{
+    content:''; position:absolute; right:9px; bottom:12px; width:6px; height:6px;
+    background:var(--red); box-shadow:0 -10px 0 0 transparent; border-radius:1px;
+  }
+  .pupo svg{ position:absolute; left:0; top:0; width:64px; height:74px; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.4)); }
+  .pupo:active{ transform:translateY(2px); }
 
-  /* ================= colonna laterale (come nella foto) ================= */
-  .side{
-    flex:0 0 auto; display:grid; gap:8px;
-    padding:12px 4px 6px 12px;
-    align-content:start;
-  }
-  @media (orientation: landscape){
-    .side{ width:clamp(230px, 36vw, 330px); padding:4px 0 0 14px; overflow-y:auto; align-content:start; }
-    .siderow{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-    .siderow + .siderow{ margin-top:9px; }
-    .side .pill{ font-size:6px; padding:10px 4px 9px; }
-  }
-  @media (orientation: portrait){
-    .side{ padding:14px 2px 2px 2px; }
-    .siderow{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+  /* ============ pannello comandi in basso (griglia identica alla foto) ============ */
+  .bottom{
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:auto 1fr 1fr 1fr;
+    gap:8px;
+    padding:12px 4px 6px 70px; /* spazio a sinistra per il pupazzetto */
+    align-items:stretch;
   }
   .pill{
-    font-size:8px; letter-spacing:1px; color:var(--ink);
-    padding:11px 8px 10px;
+    font-size:7px; letter-spacing:1px; color:var(--ink);
+    padding:11px 4px 10px;
     border:var(--px) solid var(--ink);
-    border-radius:14px;
+    border-radius:12px;
     background:var(--orange);
     box-shadow: inset 3px 3px 0 var(--orange-hi), inset -3px -3px 0 var(--orange-lo);
     text-transform:uppercase; white-space:nowrap; overflow:hidden;
@@ -262,15 +239,14 @@
   .pill.green:active{ box-shadow: inset 2px 2px 0 var(--green-lo); }
   .pill.grey{ background:var(--grey); color:#3c4263; box-shadow: inset 3px 3px 0 var(--grey-hi), inset -3px -3px 0 var(--grey-lo); }
   .pill.on{ outline:var(--px) solid var(--red); }
-  .siderow.chips{ grid-template-columns:auto auto 1fr; }
   .chip{
-    font-size:7px; padding:8px 8px 7px; border:var(--px) solid var(--ink); border-radius:10px;
+    font-size:7px; padding:11px 8px 10px; border:var(--px) solid var(--ink); border-radius:10px;
     background:var(--green); box-shadow: inset 2px 2px 0 var(--green-hi), inset -2px -2px 0 var(--green-lo);
   }
   .chip.red{ background:var(--red); color:#fff; box-shadow: inset 2px 2px 0 var(--red-hi), inset -2px -2px 0 var(--red-lo); }
   .chip.off{ opacity:.45; }
 
-  /* ================= marker ================= */
+  /* ============ marker ============ */
   .mk{ background:none; border:none; }
   .mk-spider{
     width:36px; height:36px; display:grid; place-items:center;
@@ -306,9 +282,9 @@
   .pp b{ color:var(--red); display:block; margin-bottom:4px; font-size:9px; }
   .pp .y b{ color:#8a6a10; }
 
-  /* ================= pannelli, toast, loader ================= */
+  /* ============ pannelli, toast, loader ============ */
   .panel{
-    position:absolute; z-index:1200; left:6px; right:6px; bottom:6px; top:20%;
+    position:absolute; z-index:1200; left:6px; right:6px; bottom:6px; top:18%;
     background:var(--paper);
     border:var(--px) solid var(--ink);
     box-shadow: 6px 6px 0 rgba(0,0,0,.5), inset 2px 2px 0 #fff;
@@ -347,23 +323,26 @@
   }
   .loader .lbadge svg{ width:42px; height:42px; }
 
-  @media (orientation: portrait){
-    .smt{ bottom:104px; }
-    .skull{ bottom:58px; width:32px; height:32px; }
-    .skull svg{ width:20px; height:20px; }
-    .keys-float{ left:12px; transform:none; }
-    .cluster{ right:-4px; }
-  }
   @media (max-width:420px){
-    .pill{ font-size:6px; padding:10px 4px 9px; border-radius:11px; }
-    .timer .d{ font-size:8px; min-width:16px; padding:4px 3px; }
-    .badge{ width:52px; height:52px; top:-10px; left:-8px; }
+    .timer .d{ font-size:8px; min-width:15px; padding:4px 3px; }
+    .maskred{ width:44px; height:44px; }
+    .maskred svg{ width:32px; height:32px; }
+    .badge{ width:52px; height:52px; top:-10px; right:-6px; }
     .badge svg{ width:34px; height:34px; }
-    .key{ width:38px; height:42px; }
-    .bigeye{ width:54px; height:54px; }
-    .bigeye svg{ width:34px; height:34px; }
-    .ballbtn{ width:38px; height:38px; }
-    .octo{ width:40px; height:40px; }
+    .key{ width:40px; height:40px; font-size:12px; }
+    .bigeye{ width:52px; height:52px; }
+    .bigeye svg{ width:32px; height:32px; }
+    .smt{ font-size:8px; }
+    .pill{ font-size:6px; padding:10px 2px 9px; letter-spacing:0; }
+    .chip{ font-size:6px; padding:10px 6px 9px; letter-spacing:0; }
+    .bottom{ padding-left:62px; gap:6px; }
+    .pupo{ width:66px; height:78px; }
+    .pupo .octobg{ width:56px; height:56px; }
+    .pupo svg{ width:58px; height:68px; }
+  }
+  @media (orientation: landscape) and (max-height:500px){
+    .console{ max-width:none; }
+    .bottom{ grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr 1fr; padding-left:80px; }
   }
 </style>
 </head>
@@ -377,12 +356,19 @@
     <div id="map" class="mode-wire"></div>
     <div class="scan"></div>
     <div class="ruler-v"></div>
-    <div class="ruler-h"></div>
+    <div class="ruler-t"></div>
 
-    <div class="hud">
-      <div class="timer" id="timer1"><span class="d">0</span><span class="d">0</span><span class="sep">:</span><span class="d">0</span><span class="d">0</span><span class="lab">LAST SIGHT</span></div>
-      <div class="timer" id="timer2"><span class="d">0</span><span class="d">0</span><span class="sep">:</span><span class="d">0</span><span class="d">0</span><span class="lab">UPTIME</span></div>
-      <div class="ball"></div>
+    <div class="mask-left" id="maskWhite"></div>
+    <div class="smt">
+      SMT 1
+      <small>SPIDEY TRACER</small>
+      <div class="bar"></div>
+    </div>
+
+    <div class="topcenter">
+      <div class="timer" id="timer1"><span class="d">0</span><span class="d">0</span><span class="sep">:</span><span class="d">0</span><span class="d">0</span></div>
+      <button class="maskred" id="maskRed" aria-label="Centra posizione"></button>
+      <div class="timer" id="timer2"><span class="d">0</span><span class="d">0</span><span class="sep">:</span><span class="d">0</span><span class="d">0</span></div>
     </div>
 
     <div class="banner" id="banner">
@@ -390,23 +376,16 @@
       <b id="bannerLoc">LOCATION: ????</b>
     </div>
 
-    <div class="smt">
-      SMT 1<br><small>SPIDEY TRACER</small>
-      <div class="bar"></div>
-    </div>
-    <div class="skull" id="skull"></div>
-
-    <div class="keys-float">
+    <div class="keys-left">
       <button class="key" id="key0">0</button>
       <button class="key" id="keyS">S</button>
       <button class="key" id="keyT">T</button>
+      <button class="bigeye" id="bigEye" aria-label="Nuovo avvistamento"></button>
     </div>
 
-    <div class="cluster">
-      <button class="bigeye" id="bigEye" aria-label="Nuovo avvistamento"></button>
-      <button class="ballbtn" id="btnBall" aria-label="Centra posizione"></button>
-      <button class="octo" id="btnZoom" aria-label="Zoom">+</button>
-    </div>
+    <button class="pupo" id="pupo" aria-label="Spidey">
+      <span class="octobg"></span>
+    </button>
 
     <div class="panel" id="panelChat">
       <div class="panel-head">CHAT — RETE AVVISTATORI <button data-close="panelChat">X</button></div>
@@ -425,27 +404,21 @@
     </div>
   </div>
 
-  <div class="side">
-    <div class="siderow">
-      <button class="pill" id="btnChat">Chat</button>
-      <button class="pill" id="btnArchive">Archive</button>
-      <button class="pill" id="btnShare">Share</button>
-    </div>
-    <div class="siderow">
-      <button class="pill" id="btnTerrain">Terrain</button>
-      <button class="pill grey" id="btn3d">3D View</button>
-      <button class="pill" id="btnCenter">Center&nbsp;Loc.</button>
-    </div>
-    <div class="siderow">
-      <button class="pill green" data-prof="1">Prof 1</button>
-      <button class="pill green" data-prof="2">Prof 2</button>
-      <button class="pill green" data-prof="3">Prof 3</button>
-    </div>
-    <div class="siderow chips">
-      <button class="chip" id="chipA1">A.1</button>
-      <button class="chip red" id="chipA2">A.2</button>
-      <span></span>
-    </div>
+  <div class="bottom">
+    <button class="chip" id="chipA1">A.1</button>
+    <button class="pill green" data-prof="1">Prof 1</button>
+    <button class="pill" id="btnTerrain">Terrain</button>
+    <button class="pill" id="btnChat">Chat</button>
+
+    <button class="chip red" id="chipA2">A.2</button>
+    <button class="pill green" data-prof="2">Prof 2</button>
+    <button class="pill grey" id="btn3d">3D View</button>
+    <button class="pill" id="btnArchive">Archive</button>
+
+    <span></span>
+    <button class="pill green" data-prof="3">Prof 3</button>
+    <button class="pill" id="btnCenter">Center&nbsp;Loc.</button>
+    <button class="pill" id="btnShare">Share</button>
   </div>
 
 </div>
@@ -471,14 +444,45 @@ const SPIDER = (fill) => `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000
 const EYES = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
 <g fill="#1B2044"><rect x="3" y="4" width="4" height="6"/><rect x="9" y="4" width="4" height="6"/></g>
 <g fill="#fff"><rect x="4" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/></g></svg>`;
-const SKULL = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-<g fill="#1B2044"><rect x="4" y="3" width="8" height="6"/><rect x="5" y="9" width="6" height="2"/>
-<rect x="5" y="11" width="2" height="2"/><rect x="9" y="11" width="2" height="2"/></g>
-<g fill="#dfe3f2"><rect x="5" y="5" width="2" height="2"/><rect x="9" y="5" width="2" height="2"/><rect x="7" y="7" width="2" height="1"/></g></svg>`;
+/* maschera bianca: ottagono chiaro con due occhioni scuri */
+const MASKW = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<g fill="#1B2044">
+<rect x="2" y="5" width="5" height="5"/><rect x="3" y="4" width="3" height="1"/><rect x="3" y="10" width="3" height="1"/>
+<rect x="9" y="5" width="5" height="5"/><rect x="10" y="4" width="3" height="1"/><rect x="10" y="10" width="3" height="1"/>
+</g></svg>`;
+/* maschera rossa di Spidey: occhi bianchi a goccia */
+const MASKR = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<g fill="#fff">
+<rect x="2" y="5" width="5" height="4"/><rect x="3" y="4" width="3" height="1"/><rect x="3" y="9" width="2" height="1"/>
+<rect x="9" y="5" width="5" height="4"/><rect x="10" y="4" width="3" height="1"/><rect x="11" y="9" width="2" height="1"/>
+</g>
+<g fill="#8E1F16"><rect x="7" y="2" width="2" height="1"/><rect x="7" y="12" width="2" height="1"/></g></svg>`;
+/* pupazzetto Spider-Man seduto (per l'angolo in basso a sinistra) */
+const PUPO = `<svg viewBox="0 0 20 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<g fill="#E04330">
+<rect x="6" y="1" width="8" height="7"/><rect x="5" y="2" width="1" height="5"/><rect x="14" y="2" width="1" height="5"/>
+<rect x="7" y="8" width="6" height="1"/>
+<rect x="6" y="9" width="8" height="6"/>
+<rect x="4" y="10" width="2" height="4"/><rect x="14" y="10" width="2" height="4"/>
+<rect x="4" y="15" width="12" height="3"/>
+<rect x="2" y="17" width="4" height="3"/><rect x="14" y="17" width="4" height="3"/>
+</g>
+<g fill="#8E1F16">
+<rect x="9" y="9" width="2" height="6"/><rect x="6" y="14" width="8" height="1"/>
+<rect x="2" y="19" width="4" height="2"/><rect x="14" y="19" width="4" height="2"/>
+</g>
+<g fill="#fff">
+<rect x="6" y="3" width="3" height="3"/><rect x="7" y="2" width="2" height="1"/>
+<rect x="11" y="3" width="3" height="3"/><rect x="11" y="2" width="2" height="1"/>
+</g>
+<g fill="#1B2044"><rect x="7" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/></g>
+</svg>`;
 document.getElementById('logoTop').innerHTML = SPIDER('#1B2044');
 document.querySelector('.loader .lbadge').innerHTML = SPIDER('#1B2044');
 document.getElementById('bigEye').innerHTML = EYES;
-document.getElementById('skull').innerHTML = SKULL;
+document.getElementById('maskWhite').innerHTML = MASKW;
+document.getElementById('maskRed').innerHTML = MASKR;
+document.getElementById('pupo').insertAdjacentHTML('beforeend', PUPO);
 
 /* ---------- stato ---------- */
 const S = {
@@ -510,6 +514,7 @@ const CHAT_TXT = [
   ['SilkSeeker','Il sensore A.2 è impazzito 😅'],
   ['M.Rondini','Qualcuno vicino alla piazza? Contatto in avvicinamento.'],
 ];
+const PUPO_TXT = ['SPIDEY PRONTO!','SENSO DI RAGNO ATTIVO','THWIP!','TUTTO OK LÀ FUORI?'];
 
 /* ---------- mappa ---------- */
 const map = L.map('map', { zoomControl:false, attributionControl:true, worldCopyJump:true })
@@ -737,8 +742,8 @@ $('btnShare').onclick = async () => {
   else { toast('LINK COPIATO'); try{ await navigator.clipboard.writeText(location.href); }catch(e){} }
 };
 $('btnCenter').onclick = () => { if (S.me) map.setView(S.me, 16); beep(880); };
-$('btnBall').onclick = () => { if (S.me) map.setView(S.me, 16); beep(880); toast('POSIZIONE CENTRATA'); };
-$('btnZoom').onclick = () => { map.zoomIn(); beep(920); };
+$('maskRed').onclick = () => { if (S.me) map.setView(S.me, 16); beep(880); toast('POSIZIONE CENTRATA'); };
+$('pupo').onclick = () => { beep(1040,.09); toast(PUPO_TXT[S.sightCount % PUPO_TXT.length]); };
 $('btnTerrain').onclick = () => {
   beep(880);
   map.removeLayer(TILES[tileMode]);

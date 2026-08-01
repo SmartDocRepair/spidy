@@ -12,9 +12,7 @@ dall'app) e **segnalini gialli** (segnalazioni di altri utenti, anch'esse simula
 
 **▶ Prova l'app:** https://smartdocrepair.github.io/spidy/
 
-| Verticale | Orizzontale (layout del tracer originale) |
-|:---:|:---:|
-| ![Schermata verticale](docs/screenshot.png) | ![Schermata orizzontale](docs/screenshot-landscape.png) |
+<p align="center"><img src="docs/screenshot.png" alt="Schermata del tracer" width="380"></p>
 
 *Gli screenshot mostrano la mappa dimostrativa; aprendo l'app la mappa è quella reale del posto in cui ti trovi.*
 
