@@ -1,4 +1,4 @@
-const CACHE = 'smt1-v1';
+const CACHE = 'smt1-v3';
 const SHELL = [
   '.',
   'index.html',
@@ -25,6 +25,20 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   // le tile della mappa restano sempre di rete: la mappa deve essere reale
   if (url.hostname.includes('cartocdn') || url.hostname.includes('openstreetmap')) return;
+  // pagina e navigazioni: prima la rete (così gli aggiornamenti arrivano subito),
+  // cache solo come ripiego offline
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('index.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((hit) => hit || caches.match('index.html')))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then((hit) => hit || fetch(e.request))
   );
