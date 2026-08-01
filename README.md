@@ -12,9 +12,9 @@ dall'app) e **segnalini gialli** (segnalazioni di altri utenti, anch'esse simula
 
 **▶ Prova l'app:** https://smartdocrepair.github.io/spidy/
 
-| Mappa e avvistamenti | Chat della rete avvistatori |
+| Verticale | Orizzontale (layout del tracer originale) |
 |:---:|:---:|
-| ![Schermata principale](docs/screenshot.png) | ![Pannello chat](docs/screenshot-chat.png) |
+| ![Schermata verticale](docs/screenshot.png) | ![Schermata orizzontale](docs/screenshot-landscape.png) |
 
 *Gli screenshot mostrano la mappa dimostrativa; aprendo l'app la mappa è quella reale del posto in cui ti trovi.*
 
