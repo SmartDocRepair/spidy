@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#AEB6E2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>SMT-1 · Spidey Tracer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<style>
+  @font-face{
+    font-family:'Press Start 2P';
+    font-style:normal; font-weight:400; font-display:swap;
+    src:url('vendor/fonts/press-start-2p-latin-400-normal.woff2') format('woff2');
+  }
+</style>
+<style>
+  :root{
+    --frame:#AEB6E2; --frame-hi:#CFD5F2; --frame-lo:#7E88BE;
+    --ink:#1B2044; --screen:#141a4a;
+    --orange:#F08A3C; --orange-hi:#FFB36B; --orange-lo:#B85F1E;
+    --red:#E03A2F; --red-hi:#FF7A66; --red-lo:#8E1F16;
+    --green:#BFCE93; --green-hi:#E2ECC2; --green-lo:#8B9C60;
+    --grey:#9FA6C4; --paper:#EFEFF8;
+    --px: 3px;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; overflow:hidden; }
+  body{
+    font-family:'Press Start 2P', monospace;
+    background:#0a0d24; color:var(--ink);
+    display:flex; flex-direction:column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  button{ font-family:inherit; border:none; cursor:pointer; }
+
+  /* ---------- pixel chrome ---------- */
+  .app{
+    flex:1; display:flex; flex-direction:column; min-height:0;
+    background:var(--frame);
+    border:var(--px) solid var(--ink);
+    box-shadow: inset var(--px) var(--px) 0 var(--frame-hi), inset calc(var(--px)*-1) calc(var(--px)*-1) 0 var(--frame-lo);
+    margin:4px; position:relative;
+  }
+
+  .topbar{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; flex-wrap:wrap;
+  }
+  .logo{
+    width:44px; height:44px; flex:0 0 auto;
+    background:var(--orange);
+    border:var(--px) solid var(--ink);
+    box-shadow: inset 2px 2px 0 var(--orange-hi), inset -2px -2px 0 var(--orange-lo);
+    display:grid; place-items:center;
+    clip-path: polygon(22% 0,78% 0,100% 22%,100% 78%,78% 100%,22% 100%,0 78%,0 22%);
+  }
+  .logo svg{ width:30px; height:30px; }
+  .title{ display:flex; flex-direction:column; gap:4px; margin-right:auto; }
+  .title b{ font-size:11px; letter-spacing:1px; }
+  .title span{ font-size:7px; color:var(--ink); opacity:.65; letter-spacing:2px; }
+
+  .pill{
+    font-size:8px; letter-spacing:1px; color:var(--ink);
+    padding:9px 10px 8px;
+    border:var(--px) solid var(--ink);
+    border-radius:12px;
+    background:var(--orange);
+    box-shadow: inset 2px 2px 0 var(--orange-hi), inset -2px -2px 0 var(--orange-lo);
+    text-transform:uppercase;
+  }
+  .pill:active{ transform:translateY(2px); box-shadow: inset 2px 2px 0 var(--orange-lo); }
+  .pill.green{ background:var(--green); box-shadow: inset 2px 2px 0 var(--green-hi), inset -2px -2px 0 var(--green-lo); }
+  .pill.green:active{ box-shadow: inset 2px 2px 0 var(--green-lo); }
+  .pill.grey{ background:var(--grey); color:#3c4263; box-shadow: inset 2px 2px 0 #c3c8de, inset -2px -2px 0 #6d7494; }
+  .pill.on{ outline:var(--px) solid var(--red); }
+
+  /* ---------- screen / map ---------- */
+  .screen{
+    position:relative; flex:1; min-height:0;
+    margin:0 10px;
+    border:var(--px) solid var(--ink);
+    box-shadow: inset 3px 3px 0 rgba(0,0,0,.35);
+    background:var(--screen);
+  }
+  #map{ position:absolute; inset:0; background:var(--screen); }
+  /* dark-blue wireframe look, pixelated for the retro feel */
+  #map.mode-wire .leaflet-tile-pane{
+    filter: sepia(.7) hue-rotate(202deg) saturate(3.2) brightness(1.05) contrast(1.15);
+    image-rendering: pixelated;
+  }
+  #map.mode-terrain .leaflet-tile-pane{ filter:none; image-rendering:auto; }
+  .leaflet-container{ font-family:'Press Start 2P', monospace; }
+  .leaflet-control-attribution{ font-family:Arial,sans-serif; font-size:8px; opacity:.75; }
+  .leaflet-control-zoom{ display:none; }
+
+  /* scanline overlay */
+  .scan{
+    pointer-events:none; position:absolute; inset:0; z-index:800;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 3px);
+    mix-blend-mode:screen;
+  }
+
+  /* sighting banner */
+  .banner{
+    position:absolute; z-index:900; top:10px; left:50%;
+    transform:translateX(-50%) scale(0); transform-origin:top center;
+    background:var(--orange); color:var(--red-lo);
+    border:var(--px) solid var(--ink);
+    box-shadow: inset 2px 2px 0 var(--orange-hi), 4px 4px 0 rgba(0,0,0,.4);
+    padding:10px 12px; font-size:8px; line-height:1.7; letter-spacing:1px;
+    text-align:center; white-space:nowrap; text-transform:uppercase;
+    transition:transform .18s steps(4);
+  }
+  .banner.show{ transform:translateX(-50%) scale(1); }
+  .banner b{ display:block; color:#7a1408; }
+
+  /* right rail on the map */
+  .rail{
+    position:absolute; z-index:900; right:8px; top:8px;
+    display:flex; flex-direction:column; gap:7px; align-items:flex-end;
+  }
+  .rail .pill{ font-size:7px; padding:8px 9px 7px; }
+  .chips{ display:flex; gap:6px; }
+  .chip{
+    font-size:7px; padding:7px 7px 6px; border:var(--px) solid var(--ink); border-radius:10px;
+    background:var(--green); box-shadow: inset 2px 2px 0 var(--green-hi), inset -2px -2px 0 var(--green-lo);
+  }
+  .chip.red{ background:var(--red); color:#fff; box-shadow: inset 2px 2px 0 var(--red-hi), inset -2px -2px 0 var(--red-lo); }
+  .chip.off{ opacity:.45; }
+
+  /* markers */
+  .mk{ background:none; border:none; }
+  .mk-spider{
+    width:34px; height:34px; display:grid; place-items:center;
+    background:var(--red);
+    clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+    border:2px solid #5c0f08;
+    box-shadow: inset 2px 2px 0 var(--red-hi);
+    animation: blip 1.6s steps(2) infinite;
+  }
+  .mk-spider svg{ width:22px; height:22px; }
+  @keyframes blip{ 50%{ filter:brightness(1.35); } }
+  .mk-report{
+    width:28px; height:28px; display:grid; place-items:center;
+    background:#F4C534;
+    clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+    border:2px solid #6b4d05;
+    box-shadow: inset 2px 2px 0 #ffe38a;
+    color:#6b4d05; font-size:13px; font-family:'Press Start 2P',monospace;
+  }
+  .mk-me{ position:relative; width:26px; height:26px; }
+  .mk-me .dot{
+    position:absolute; inset:5px; background:#fff; border:3px solid var(--ink); border-radius:2px;
+  }
+  .mk-me .ring{
+    position:absolute; inset:-6px; border:2px solid #fff; opacity:.8;
+    animation:ping 2s steps(6) infinite;
+  }
+  @keyframes ping{ 0%{ transform:scale(.4); opacity:.9 } 100%{ transform:scale(1.6); opacity:0 } }
+  .pulse-ring{
+    border:2px solid rgba(224,58,47,.8); border-radius:50%;
+    animation:ping 1.8s steps(8) infinite; background:none;
+  }
+
+  .leaflet-popup-content-wrapper{
+    background:var(--paper); color:var(--ink);
+    border:var(--px) solid var(--ink); border-radius:4px;
+    box-shadow:4px 4px 0 rgba(0,0,0,.45); font-size:8px; line-height:1.9;
+  }
+  .leaflet-popup-content{ margin:10px 12px; }
+  .leaflet-popup-tip{ background:var(--paper); border:2px solid var(--ink); }
+  .pp b{ color:var(--red); display:block; margin-bottom:4px; font-size:9px; }
+  .pp .y b{ color:#8a6a10; }
+
+  /* ---------- bottom console ---------- */
+  .console{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom)); flex-wrap:nowrap;
+  }
+  .timers{ display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .timer{
+    display:flex; gap:3px; align-items:center;
+  }
+  .timer .d{
+    background:var(--paper); border:2px solid var(--ink); font-size:9px;
+    padding:5px 4px; min-width:18px; text-align:center;
+  }
+  .timer .lab{ font-size:6px; opacity:.6; margin-left:3px; }
+  .keys{ display:flex; gap:7px; margin-left:auto; }
+  .key{
+    width:42px; height:46px; color:#fff; font-size:12px;
+    background:var(--red);
+    border:var(--px) solid var(--ink); border-radius:8px 8px 12px 12px;
+    box-shadow: inset 2px 2px 0 var(--red-hi), inset -2px -4px 0 var(--red-lo);
+  }
+  .key:active{ transform:translateY(2px); box-shadow: inset 2px 2px 0 var(--red-lo); }
+  .key.on{ outline:3px solid var(--orange); }
+  .bigeye{
+    width:56px; height:56px; flex:0 0 auto;
+    background:var(--red); border:var(--px) solid var(--ink); border-radius:50%;
+    box-shadow: inset 3px 3px 0 var(--red-hi), inset -3px -5px 0 var(--red-lo);
+    display:grid; place-items:center;
+  }
+  .bigeye svg{ width:34px; height:34px; }
+  .bigeye:active{ transform:translateY(2px); }
+
+  /* ---------- panels (chat / archive) ---------- */
+  .panel{
+    position:absolute; z-index:1200; left:6px; right:6px; bottom:6px; top:22%;
+    background:var(--paper);
+    border:var(--px) solid var(--ink);
+    box-shadow: 6px 6px 0 rgba(0,0,0,.5), inset 2px 2px 0 #fff;
+    display:none; flex-direction:column;
+  }
+  .panel.open{ display:flex; }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; background:var(--orange);
+    border-bottom:var(--px) solid var(--ink);
+    font-size:9px; letter-spacing:1px;
+  }
+  .panel-head button{ background:var(--red); color:#fff; border:2px solid var(--ink); font-size:9px; padding:5px 8px; }
+  .panel-body{ flex:1; overflow-y:auto; padding:12px; font-size:8px; line-height:2; }
+  .msg{ margin-bottom:10px; }
+  .msg b{ color:var(--red); }
+  .msg.sys b{ color:#8a6a10; }
+  .log-item{ border-bottom:2px dotted var(--grey); padding:7px 0; }
+  .log-item b{ color:var(--red); }
+
+  /* toast + loader */
+  .toast{
+    position:absolute; z-index:1500; bottom:16px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); font-size:8px; letter-spacing:1px;
+    padding:10px 14px; border:2px solid var(--paper); display:none; white-space:nowrap;
+  }
+  .loader{
+    position:absolute; inset:0; z-index:2000; background:var(--screen);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    color:#aeb8ff; font-size:9px; letter-spacing:2px; text-align:center; line-height:2;
+  }
+  .loader .logo{ width:64px; height:64px; animation:blip 1s steps(2) infinite; }
+  .loader .logo svg{ width:42px; height:42px; }
+
+  @media (min-width:700px){
+    .title b{ font-size:14px; } .pill{ font-size:9px; }
+  }
+  @media (max-width:430px){
+    .topbar{ gap:6px; padding:7px 8px; }
+    .topbar .pill{ font-size:7px; padding:8px 7px 7px; }
+    .logo{ width:38px; height:38px; }
+    .title b{ font-size:10px; } .title span{ font-size:6px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo" id="logoTop"></div>
+    <div class="title">
+      <b>SMT-1</b>
+      <span>SPIDEY TRACER</span>
+    </div>
+    <button class="pill" id="btnChat">Chat</button>
+    <button class="pill" id="btnArchive">Archive</button>
+    <button class="pill" id="btnShare">Share</button>
+  </div>
+
+  <div class="screen">
+    <div id="map" class="mode-wire"></div>
+    <div class="scan"></div>
+
+    <div class="banner" id="banner">
+      NEW SIGHTING
+      <b id="bannerLoc">LOCATION: ????</b>
+    </div>
+
+    <div class="rail">
+      <button class="pill" id="btnTerrain">Terrain</button>
+      <button class="pill grey" id="btn3d">3D View</button>
+      <button class="pill" id="btnCenter">Center&nbsp;Loc.</button>
+      <button class="pill green" data-prof="1">Prof 1</button>
+      <button class="pill green" data-prof="2">Prof 2</button>
+      <button class="pill green" data-prof="3">Prof 3</button>
+      <div class="chips">
+        <button class="chip" id="chipA1">A.1</button>
+        <button class="chip red" id="chipA2">A.2</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panelChat">
+      <div class="panel-head">CHAT — RETE AVVISTATORI <button data-close="panelChat">X</button></div>
+      <div class="panel-body" id="chatBody"></div>
+    </div>
+    <div class="panel" id="panelArchive">
+      <div class="panel-head">ARCHIVE — REGISTRO AVVISTAMENTI <button data-close="panelArchive">X</button></div>
+      <div class="panel-body" id="archiveBody"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="loader" id="loader">
+      <div class="logo"></div>
+      <div>TRIANGOLAZIONE SEGNALE<br>ATTESA GPS...</div>
+    </div>
+  </div>
+
+  <div class="console">
+    <div class="timers">
+      <div class="timer" id="timer1"><span class="d">0</span><span class="d">0</span>:<span class="d">0</span><span class="d">0</span><span class="lab">LAST SIGHT</span></div>
+      <div class="timer" id="timer2"><span class="d">0</span><span class="d">0</span>:<span class="d">0</span><span class="d">0</span><span class="lab">UPTIME</span></div>
+    </div>
+    <div class="keys">
+      <button class="key" id="key0">0</button>
+      <button class="key" id="keyS">S</button>
+      <button class="key" id="keyT">T</button>
+    </div>
+    <button class="bigeye" id="bigEye" aria-label="Nuovo avvistamento"></button>
+  </div>
+
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script>
+'use strict';
+
+/* ---------- pixel spider svg ---------- */
+const SPIDER = (fill) => `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<g fill="${fill}">
+<rect x="7" y="5" width="2" height="2"/><rect x="6" y="7" width="4" height="4"/>
+<rect x="4" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/>
+<rect x="5" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/>
+<rect x="3" y="6" width="3" height="1"/><rect x="10" y="6" width="3" height="1"/>
+<rect x="2" y="7" width="1" height="2"/><rect x="13" y="7" width="1" height="2"/>
+<rect x="3" y="9" width="3" height="1"/><rect x="10" y="9" width="3" height="1"/>
+<rect x="2" y="10" width="1" height="2"/><rect x="13" y="10" width="1" height="2"/>
+<rect x="4" y="12" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/>
+<rect x="5" y="11" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/>
+</g></svg>`;
+const EYES = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<g fill="#1B2044"><rect x="3" y="4" width="4" height="6"/><rect x="9" y="4" width="4" height="6"/></g>
+<g fill="#fff"><rect x="4" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/></g></svg>`;
+document.getElementById('logoTop').innerHTML = SPIDER('#1B2044');
+document.querySelector('.loader .logo').innerHTML = SPIDER('#1B2044');
+document.getElementById('bigEye').innerHTML = EYES;
+
+/* ---------- state ---------- */
+const S = {
+  me: null, meMarker: null, meAcc: null,
+  spiders: [], reports: [],
+  layerSpiders: null, layerReports: null, layerFx: null,
+  sound: false, track: false, pulse: false, trails: true,
+  prof: 1, lastSight: Date.now(), boot: Date.now(),
+  spawned: false, sightCount: 0,
+};
+const FALLBACK = [41.9028, 12.4964]; // Roma, se il GPS è negato
+
+const NAMES = ['SGT-01','SGT-02','SGT-03','SGT-04','SGT-05','SGT-06','SGT-07'];
+const USERS = ['WebWatcher_77','GiulioB','ArachnoFan','NightOwl_Rm','SilkSeeker','M.Rondini','TettiRossi'];
+const PLACES = ['TETTO','VICOLO','CORTILE','PARCHEGGIO','TERRAZZA','CANTIERE','PONTE','CAMPANILE'];
+const REPORT_TXT = [
+  'Movimento sul tetto, molto veloce.',
+  'Ragnatela enorme tra due palazzi!',
+  'Sentito un tonfo, poi più nulla.',
+  'Visto passare sopra il semaforo.',
+  'Le telecamere hanno ripreso qualcosa.',
+  'Ombra sul muro del cortile, giuro.',
+];
+const CHAT_TXT = [
+  ['WebWatcher_77','Segnale forte in zona nord, qualcuno conferma?'],
+  ['GiulioB','Confermo. Il tracer segna 2 contatti.'],
+  ['ArachnoFan','Sto caricando le foto in archivio.'],
+  ['NightOwl_Rm','Attenti, si muove sui tetti.'],
+  ['SilkSeeker','Il sensore A.2 è impazzito 😅'],
+  ['M.Rondini','Qualcuno vicino alla piazza? Contatto in avvicinamento.'],
+];
+
+/* ---------- map ---------- */
+const map = L.map('map', { zoomControl:false, attributionControl:true, worldCopyJump:true })
+  .setView(FALLBACK, 15);
+const TILES = {
+  wire: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains:'abcd',
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+  }),
+  terrain: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }),
+};
+let tileMode = 'wire';
+TILES.wire.addTo(map);
+S.layerFx = L.layerGroup().addTo(map);
+S.layerSpiders = L.layerGroup().addTo(map);
+S.layerReports = L.layerGroup().addTo(map);
+
+/* ---------- helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const rnd = (a,b) => a + Math.random()*(b-a);
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+function offset(lat, lng, meters, bearing){
+  const dLat = (meters*Math.cos(bearing))/111320;
+  const dLng = (meters*Math.sin(bearing))/(111320*Math.cos(lat*Math.PI/180));
+  return [lat+dLat, lng+dLng];
+}
+function distM(a, b){ return map.distance(a, b); }
+function fmtDist(m){ return m < 1000 ? Math.round(m)+' m' : (m/1000).toFixed(1)+' km'; }
+function toast(txt, ms=2200){
+  const t = $('toast'); t.textContent = txt; t.style.display='block';
+  clearTimeout(t._h); t._h = setTimeout(()=> t.style.display='none', ms);
+}
+function beep(freq=880, dur=0.07){
+  if(!S.sound) return;
+  try{
+    const ctx = beep.ctx || (beep.ctx = new (window.AudioContext||window.webkitAudioContext)());
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='square'; o.frequency.value=freq; g.gain.value=0.04;
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function fakeCode(){
+  return 'GRID ' + String.fromCharCode(65+Math.floor(Math.random()*8)) + '-' + Math.floor(rnd(10,99));
+}
+
+/* ---------- icons ---------- */
+const icoSpider = L.divIcon({ className:'mk', html:`<div class="mk-spider">${SPIDER('#1B0705')}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
+const icoReport = L.divIcon({ className:'mk', html:`<div class="mk-report">!</div>`, iconSize:[28,28], iconAnchor:[14,14] });
+const icoMe     = L.divIcon({ className:'mk', html:`<div class="mk-me"><div class="ring"></div><div class="dot"></div></div>`, iconSize:[26,26], iconAnchor:[13,13] });
+
+/* ---------- fake entities ---------- */
+function spawnSpider(nearMe, jump){
+  const base = nearMe || S.me || FALLBACK;
+  const pos = offset(base[0], base[1], rnd(jump?400:120, jump?900:600), rnd(0, Math.PI*2));
+  const sp = {
+    id: NAMES[S.spiders.length % NAMES.length],
+    pos, signal: Math.round(rnd(52, 98)),
+    marker: L.marker(pos, { icon: icoSpider }),
+    trail: L.polyline([pos], { color:'#E03A2F', weight:2, dashArray:'4 6', opacity:.7 }),
+    ring: null,
+  };
+  sp.marker.on('click', () => {
+    const d = S.me ? fmtDist(distM(sp.pos, S.me)) : '???';
+    sp.marker.bindPopup(
+      `<div class="pp"><b>◈ CONTATTO ${sp.id}</b>` +
+      `SEGNALE: ${sp.signal}%<br>DIST: ${d}<br>${fakeCode()}<br>STATO: IN MOVIMENTO</div>`
+    ).openPopup();
+    beep(660);
+  });
+  sp.marker.addTo(S.layerSpiders);
+  if (S.trails) sp.trail.addTo(S.layerFx);
+  if (S.pulse) addRing(sp);
+  S.spiders.push(sp);
+  return sp;
+}
+function addRing(sp){
+  sp.ring = L.marker(sp.pos, { icon: L.divIcon({ className:'mk', html:`<div class="pulse-ring" style="width:60px;height:60px"></div>`, iconSize:[60,60], iconAnchor:[30,30] }), interactive:false });
+  sp.ring.addTo(S.layerFx);
+}
+function spawnReport(){
+  const base = S.me || FALLBACK;
+  const pos = offset(base[0], base[1], rnd(150, 1200), rnd(0, Math.PI*2));
+  const user = pick(USERS), txt = pick(REPORT_TXT);
+  const ago = Math.floor(rnd(2, 55));
+  const rp = { pos, user, txt, ago, marker: L.marker(pos, { icon: icoReport }) };
+  rp.marker.on('click', () => {
+    const d = S.me ? fmtDist(distM(rp.pos, S.me)) : '???';
+    rp.marker.bindPopup(
+      `<div class="pp y"><b>⚑ SEGNALAZIONE UTENTE</b>` +
+      `DA: ${user}<br>"${txt}"<br>${ago} MIN FA · DIST: ${d}</div>`
+    ).openPopup();
+    beep(520);
+  });
+  rp.marker.addTo(S.layerReports);
+  S.reports.push(rp);
+  return rp;
+}
+function spawnWorld(){
+  if (S.spawned) return;
+  S.spawned = true;
+  const nSp = Math.floor(rnd(4, 7)), nRp = Math.floor(rnd(3, 7));
+  for (let i=0;i<nSp;i++) spawnSpider(S.me, false);
+  for (let i=0;i<nRp;i++) spawnReport();
+  logSighting('SCANSIONE INIZIALE', `${nSp} CONTATTI · ${nRp} SEGNALAZIONI`);
+}
+
+/* ---------- movement + sightings ---------- */
+setInterval(() => {
+  for (const sp of S.spiders){
+    const step = rnd(8, 35);
+    sp.pos = offset(sp.pos[0], sp.pos[1], step, rnd(0, Math.PI*2));
+    sp.marker.setLatLng(sp.pos);
+    if (sp.ring) sp.ring.setLatLng(sp.pos);
+    const pts = sp.trail.getLatLngs(); pts.push(L.latLng(sp.pos));
+    if (pts.length > 20) pts.shift();
+    sp.trail.setLatLngs(pts);
+    sp.signal = Math.max(30, Math.min(99, sp.signal + Math.round(rnd(-4,4))));
+  }
+  if (S.track && S.spiders.length && S.me){
+    let best = S.spiders[0];
+    for (const sp of S.spiders) if (distM(sp.pos,S.me) < distM(best.pos,S.me)) best = sp;
+    map.panTo(best.pos, { animate:true });
+  }
+}, 3500);
+
+function newSighting(force){
+  if (!S.spawned) return;
+  S.lastSight = Date.now();
+  S.sightCount++;
+  const place = pick(PLACES), code = fakeCode();
+  $('bannerLoc').textContent = 'LOCATION: ' + (Math.random()<.3 && !force ? '????' : place+' · '+code);
+  const b = $('banner'); b.classList.add('show');
+  clearTimeout(b._h); b._h = setTimeout(()=> b.classList.remove('show'), 4200);
+  beep(990,.12); setTimeout(()=>beep(1320,.12),140);
+  if (S.spiders.length < 8 && Math.random() < .5) spawnSpider(S.me, true);
+  else if (S.spiders.length){ const sp = pick(S.spiders); sp.pos = offset(sp.pos[0],sp.pos[1],rnd(200,500),rnd(0,Math.PI*2)); sp.marker.setLatLng(sp.pos); }
+  logSighting('NUOVO AVVISTAMENTO', place + ' · ' + code);
+}
+setInterval(() => { if (Math.random() < .4) newSighting(false); }, 22000);
+
+function logSighting(title, detail){
+  const t = new Date().toTimeString().slice(0,8);
+  const el = document.createElement('div');
+  el.className = 'log-item';
+  el.innerHTML = `<b>[${t}]</b> ${title}<br>${detail}`;
+  $('archiveBody').prepend(el);
+}
+
+/* ---------- timers ---------- */
+function setTimer(id, sec){
+  const d = document.querySelectorAll('#'+id+' .d');
+  const m = Math.min(99, Math.floor(sec/60)), s = Math.floor(sec%60);
+  d[0].textContent = Math.floor(m/10); d[1].textContent = m%10;
+  d[2].textContent = Math.floor(s/10); d[3].textContent = s%10;
+}
+setInterval(() => {
+  setTimer('timer1', (Date.now()-S.lastSight)/1000);
+  setTimer('timer2', (Date.now()-S.boot)/1000);
+}, 1000);
+
+/* ---------- geolocation ---------- */
+function onFix(lat, lng, acc){
+  const first = !S.me;
+  S.me = [lat, lng];
+  if (!S.meMarker){
+    S.meMarker = L.marker(S.me, { icon: icoMe, zIndexOffset: 1000 }).addTo(map);
+    S.meMarker.bindPopup('<div class="pp"><b>◈ TU SEI QUI</b>POSIZIONE REALE<br>PRECISIONE: '+Math.round(acc||0)+' m</div>');
+    S.meAcc = L.circle(S.me, { radius: acc||30, color:'#ffffff', weight:1, fillOpacity:.06, opacity:.4 }).addTo(map);
+  } else {
+    S.meMarker.setLatLng(S.me);
+    S.meAcc.setLatLng(S.me).setRadius(acc||30);
+  }
+  if (first){
+    map.setView(S.me, 16);
+    $('loader').style.display = 'none';
+    spawnWorld();
+    setTimeout(()=> newSighting(true), 2500);
+  }
+}
+function gpsFail(){
+  $('loader').style.display = 'none';
+  if (!S.spawned){
+    S.me = FALLBACK.slice();
+    map.setView(S.me, 15);
+    spawnWorld();
+    toast('GPS NON DISPONIBILE · POSIZIONE DEMO (ROMA)', 4000);
+    setTimeout(()=> newSighting(true), 2500);
+  }
+}
+if ('geolocation' in navigator){
+  navigator.geolocation.watchPosition(
+    p => onFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy),
+    () => gpsFail(),
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
+  );
+  setTimeout(() => { if (!S.spawned) gpsFail(); }, 15000);
+} else gpsFail();
+
+/* ---------- chat ---------- */
+let chatIdx = 0;
+function pushChat(){
+  const [u, m] = CHAT_TXT[chatIdx % CHAT_TXT.length]; chatIdx++;
+  const el = document.createElement('div');
+  el.className = 'msg';
+  el.innerHTML = `<b>${u}:</b> ${m}`;
+  $('chatBody').appendChild(el);
+  $('chatBody').scrollTop = $('chatBody').scrollHeight;
+  if ($('panelChat').classList.contains('open')) beep(700,.05);
+}
+pushChat(); pushChat();
+setInterval(pushChat, 18000);
+
+/* ---------- controls ---------- */
+$('btnChat').onclick    = () => { $('panelChat').classList.add('open'); $('panelArchive').classList.remove('open'); beep(750); };
+$('btnArchive').onclick = () => { $('panelArchive').classList.add('open'); $('panelChat').classList.remove('open'); beep(750); };
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).classList.remove('open'));
+$('btnShare').onclick = async () => {
+  beep(750);
+  const data = { title:'SMT-1 Spidey Tracer', text:'Contatti rilevati in zona. Apri il tracer!', url: location.href };
+  if (navigator.share){ try{ await navigator.share(data); }catch(e){} }
+  else { toast('LINK COPIATO'); try{ await navigator.clipboard.writeText(location.href); }catch(e){} }
+};
+$('btnCenter').onclick = () => { if (S.me) map.setView(S.me, 16); beep(880); };
+$('btnTerrain').onclick = () => {
+  beep(880);
+  map.removeLayer(TILES[tileMode]);
+  tileMode = tileMode === 'wire' ? 'terrain' : 'wire';
+  TILES[tileMode].addTo(map);
+  $('map').className = 'mode-' + tileMode;
+  $('btnTerrain').classList.toggle('on', tileMode==='terrain');
+};
+$('btn3d').onclick = () => { toast('MODULO 3D OFFLINE'); beep(220,.15); };
+document.querySelectorAll('[data-prof]').forEach(b => b.onclick = () => {
+  S.prof = +b.dataset.prof; beep(880);
+  document.querySelectorAll('[data-prof]').forEach(x => x.classList.toggle('on', x===b));
+  const wantSp = S.prof !== 3, wantRp = S.prof !== 2;
+  if (wantSp) map.addLayer(S.layerSpiders); else map.removeLayer(S.layerSpiders);
+  if (wantRp) map.addLayer(S.layerReports); else map.removeLayer(S.layerReports);
+  toast(S.prof===1 ? 'PROFILO 1: TUTTI I SEGNALI' : S.prof===2 ? 'PROFILO 2: SOLO CONTATTI' : 'PROFILO 3: SOLO SEGNALAZIONI');
+});
+$('chipA1').onclick = () => {
+  S.pulse = !S.pulse; beep(660);
+  $('chipA1').classList.toggle('off', !S.pulse);
+  for (const sp of S.spiders){
+    if (S.pulse && !sp.ring) addRing(sp);
+    else if (!S.pulse && sp.ring){ S.layerFx.removeLayer(sp.ring); sp.ring = null; }
+  }
+  toast(S.pulse ? 'A.1 RADAR ON' : 'A.1 RADAR OFF');
+};
+$('chipA1').classList.add('off');
+$('chipA2').onclick = () => {
+  S.trails = !S.trails; beep(660);
+  $('chipA2').classList.toggle('off', !S.trails);
+  for (const sp of S.spiders){
+    if (S.trails) sp.trail.addTo(S.layerFx); else S.layerFx.removeLayer(sp.trail);
+  }
+  toast(S.trails ? 'A.2 TRACCE ON' : 'A.2 TRACCE OFF');
+};
+$('key0').onclick = () => { if (S.me) map.setView(S.me, 15); S.track=false; $('keyT').classList.remove('on'); beep(440); toast('VISTA RESET'); };
+$('keyS').onclick = () => { S.sound = !S.sound; $('keyS').classList.toggle('on', S.sound); beep(880); toast(S.sound?'AUDIO ON':'AUDIO OFF'); };
+$('keyT').onclick = () => { S.track = !S.track; $('keyT').classList.toggle('on', S.track); beep(880); toast(S.track?'TRACKING CONTATTO PIÙ VICINO':'TRACKING OFF'); };
+$('bigEye').onclick = () => newSighting(true);
+
+/* ---------- pwa ---------- */
+if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
