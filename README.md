@@ -23,10 +23,19 @@ dall'app) e **segnalini gialli** (segnalazioni di altri utenti, anch'esse simula
 - 🕷️ **Contatti-ragno fake**: 4–7 segnalini rossi ottagonali generati intorno a te; si muovono,
   lasciano tracce, generano eventi "NEW SIGHTING" con banner, beep e registro.
 - ⚠️ **Segnalazioni utenti fake**: segnalini gialli con autore, messaggio, età e distanza reale calcolata.
+- 🔵 **Utenti reali connessi**: chi apre l'app col GPS attivo appare agli altri come segnalino
+  blu col proprio nickname (presenza via MQTT su broker pubblico, scade dopo 60 s di silenzio).
+- 💬 **Chat vera + fake**: i messaggi della "rete avvistatori" simulata continuano ad arrivare,
+  ma puoi scrivere davvero — i messaggi reali (contrassegnati da ⚡) raggiungono tutti i connessi.
+- 🪪 **Nickname**: si imposta nel riquadro in alto a sinistra, salvato sul dispositivo.
 - 🎮 **UI pixel completa**: font Press Start 2P, cornice pervinca, scanline, pulsanti a rilievo.
-- 💬 **Chat simulata** della "rete avvistatori" con messaggi che arrivano nel tempo.
 - 📱 **PWA**: installabile su Android (e su iPhone via "Aggiungi a Home"), con service worker
   per l'avvio offline della shell (le tile della mappa restano sempre di rete).
+
+> ⚠️ **Privacy**: presenza e chat viaggiano su un **broker MQTT pubblico** (EMQX/HiveMQ) su un
+> canale in chiaro: nickname, messaggi e posizione (arrotondata a ~10 m) sono visibili a chiunque
+> ascolti quel canale. Non scrivere dati personali. La posizione viene condivisa solo se il GPS
+> reale è attivo; negando il permesso l'app resta in modalità locale.
 
 ## Come si usa
 

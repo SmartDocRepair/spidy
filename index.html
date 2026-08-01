@@ -123,6 +123,16 @@
     font-size:9px; letter-spacing:1px; line-height:1.8;
   }
   .smt small{ font-size:6px; opacity:.75; letter-spacing:2px; display:block; }
+  .smt input{
+    display:block; margin-top:5px; width:104px;
+    background:rgba(240,240,248,.14); border:2px solid #eef1ff88; border-radius:4px;
+    color:#fff; font-family:inherit; font-size:7px; letter-spacing:1px;
+    padding:5px 5px 4px; text-transform:uppercase; outline:none;
+  }
+  .smt input::placeholder{ color:#aeb8ff; }
+  .smt input:focus{ border-color:var(--orange); background:rgba(240,134,60,.18); }
+  .netled{ font-size:9px; color:var(--grey); margin-left:2px; }
+  .netled.on{ color:#7CCB4A; text-shadow:0 0 4px #7CCB4A; }
   .smt .bar{
     height:8px; width:86px; margin-top:3px;
     background:repeating-linear-gradient(90deg,#eef1ff 0 2px,transparent 2px 5px,#eef1ff 5px 6px,transparent 6px 10px);
@@ -266,6 +276,20 @@
     box-shadow: inset 2px 2px 0 #ffe38a;
     color:#6b4d05; font-size:14px; font-family:'Press Start 2P',monospace;
   }
+  .mk-user{
+    width:32px; height:32px; display:grid; place-items:center;
+    background:#3D7BF0;
+    clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
+    border:2px solid #122f6b;
+    box-shadow: inset 2px 2px 0 #7FA8FF;
+  }
+  .mk-user svg{ width:20px; height:20px; }
+  .leaflet-tooltip.nick-tip{
+    background:var(--ink); color:#cfe0ff; border:2px solid #3D7BF0; border-radius:3px;
+    font-family:'Press Start 2P',monospace; font-size:6px; letter-spacing:1px; padding:4px 6px;
+    box-shadow:2px 2px 0 rgba(0,0,0,.4);
+  }
+  .leaflet-tooltip.nick-tip::before{ display:none; }
   .mk-me{ position:relative; width:26px; height:26px; }
   .mk-me .dot{ position:absolute; inset:5px; background:#fff; border:3px solid var(--ink); border-radius:2px; }
   .mk-me .ring{ position:absolute; inset:-6px; border:2px solid #fff; opacity:.8; animation:ping 2s steps(6) infinite; }
@@ -298,6 +322,25 @@
     font-size:9px; letter-spacing:1px;
   }
   .panel-head button{ background:var(--red); color:#fff; border:2px solid var(--ink); font-size:9px; padding:5px 8px; }
+  .chat-status{ font-size:6px; letter-spacing:1px; color:#7a1408; margin-left:auto; margin-right:8px; }
+  .chat-status.on{ color:#2e6b12; }
+  .chat-input{
+    display:flex; gap:6px; padding:8px; border-top:var(--px) solid var(--ink); background:#e4e6f2;
+  }
+  .chat-input input{
+    flex:1; min-width:0; font-family:inherit; font-size:8px; letter-spacing:1px;
+    border:2px solid var(--ink); background:#fff; padding:9px 8px; outline:none;
+  }
+  .chat-input input:focus{ border-color:var(--orange); }
+  .chat-input button{
+    background:var(--orange); color:var(--ink); border:var(--px) solid var(--ink);
+    font-size:8px; padding:9px 10px; border-radius:8px;
+    box-shadow: inset 2px 2px 0 var(--orange-hi), inset -2px -2px 0 var(--orange-lo);
+  }
+  .chat-input button:active{ transform:translateY(1px); }
+  .msg.real b{ color:#2456c9; }
+  .msg.me b{ color:#2e6b12; }
+  .msg .h{ opacity:.5; font-size:6px; }
   .panel-body{ flex:1; overflow-y:auto; padding:12px; font-size:8px; line-height:2; }
   .msg{ margin-bottom:10px; }
   .msg b{ color:var(--red); }
@@ -363,6 +406,8 @@
       SMT 1
       <small>SPIDEY TRACER</small>
       <div class="bar"></div>
+      <input id="nick" maxlength="12" spellcheck="false" autocomplete="off" placeholder="NICKNAME">
+      <span class="netled" id="netled" title="rete">●</span>
     </div>
 
     <div class="topcenter">
@@ -388,8 +433,12 @@
     </button>
 
     <div class="panel" id="panelChat">
-      <div class="panel-head">CHAT — RETE AVVISTATORI <button data-close="panelChat">X</button></div>
+      <div class="panel-head">CHAT — RETE AVVISTATORI <span id="chatStatus" class="chat-status">OFFLINE</span> <button data-close="panelChat">X</button></div>
       <div class="panel-body" id="chatBody"></div>
+      <div class="chat-input">
+        <input id="chatText" maxlength="120" spellcheck="false" autocomplete="off" placeholder="SCRIVI UN MESSAGGIO...">
+        <button id="chatSend">INVIA</button>
+      </div>
     </div>
     <div class="panel" id="panelArchive">
       <div class="panel-head">ARCHIVE — REGISTRO AVVISTAMENTI <button data-close="panelArchive">X</button></div>
@@ -425,6 +474,7 @@
 </div>
 
 <script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/mqtt/mqtt.min.js"></script>
 <script>
 'use strict';
 
@@ -697,6 +747,7 @@ function onFix(lat, lng, acc){
     spawnWorld();
     setTimeout(()=> newSighting(true), 2500);
   }
+  try{ NET.gpsReal = true; pubPresence(false); }catch(e){}
 }
 function gpsFail(){
   $('loader').style.display = 'none';
@@ -718,18 +769,155 @@ if ('geolocation' in navigator){
 } else gpsFail();
 
 /* ---------- chat ---------- */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function addChatLine(nick, text, cls){
+  const el = document.createElement('div');
+  el.className = 'msg' + (cls ? ' '+cls : '');
+  el.innerHTML = `<b>${esc(nick)}:</b> ${esc(text)}`;
+  const body = $('chatBody');
+  body.appendChild(el);
+  while (body.children.length > 60) body.removeChild(body.firstChild);
+  body.scrollTop = body.scrollHeight;
+  if ($('panelChat').classList.contains('open')) beep(700,.05);
+}
 let chatIdx = 0;
 function pushChat(){
   const [u, m] = CHAT_TXT[chatIdx % CHAT_TXT.length]; chatIdx++;
-  const el = document.createElement('div');
-  el.className = 'msg';
-  el.innerHTML = `<b>${u}:</b> ${m}`;
-  $('chatBody').appendChild(el);
-  $('chatBody').scrollTop = $('chatBody').scrollHeight;
-  if ($('panelChat').classList.contains('open')) beep(700,.05);
+  addChatLine(u, m, '');
 }
 pushChat(); pushChat();
 setInterval(pushChat, 18000);
+
+/* ---------- rete reale: presenza utenti + chat via MQTT ---------- */
+const NET = {
+  base: 'smt1-spidey-tracer/v1',
+  brokers: ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'],
+  client: null, ok: false, brokerIdx: 0,
+  id: null, users: {}, seen: new Set(), lastPub: 0, gpsReal: false,
+};
+NET.id = sessionStorage.getItem('smt1-id') ||
+  ('u' + Math.random().toString(16).slice(2, 10));
+sessionStorage.setItem('smt1-id', NET.id);
+
+const nickInput = $('nick');
+nickInput.value = (localStorage.getItem('smt1-nick') ||
+  'SPIDEY-' + String(Math.floor(Math.random()*900)+100)).slice(0,12);
+function myNick(){ return (nickInput.value.trim() || 'ANONIMO').slice(0,12).toUpperCase(); }
+nickInput.addEventListener('change', () => {
+  nickInput.value = myNick();
+  localStorage.setItem('smt1-nick', nickInput.value);
+  toast('NICK: ' + nickInput.value);
+  pubPresence(true);
+});
+
+const icoUser = (nick) => L.divIcon({
+  className:'mk',
+  html:`<div class="mk-user">${SPIDER('#0d1e46')}</div>`,
+  iconSize:[32,32], iconAnchor:[16,16],
+});
+function setNet(on){
+  NET.ok = on;
+  $('netled').classList.toggle('on', on);
+  const st = $('chatStatus');
+  st.textContent = on ? 'ONLINE' : 'OFFLINE';
+  st.classList.toggle('on', on);
+}
+function netConnect(){
+  if (typeof mqtt === 'undefined') return;
+  const url = NET.brokers[NET.brokerIdx % NET.brokers.length];
+  try{
+    const c = mqtt.connect(url, {
+      clientId: 'smt1_' + NET.id, clean: true,
+      keepalive: 30, connectTimeout: 8000, reconnectPeriod: 6000,
+    });
+    NET.client = c;
+    c.on('connect', () => {
+      setNet(true);
+      c.subscribe([NET.base + '/pos', NET.base + '/chat']);
+      toast('RETE TRACER ONLINE');
+      pubPresence(true);
+    });
+    c.on('close', () => setNet(false));
+    c.on('error', () => {
+      // dopo vari tentativi falliti prova il broker successivo
+      if (!NET.ok){ NET.brokerIdx++; try{ c.end(true); }catch(e){} setTimeout(netConnect, 4000); }
+    });
+    c.on('message', (topic, payload) => {
+      let m; try{ m = JSON.parse(payload.toString()); }catch(e){ return; }
+      if (!m || m.id === NET.id) return;
+      if (topic === NET.base + '/chat'){
+        if (!m.k || NET.seen.has(m.k)) return;
+        NET.seen.add(m.k);
+        if (NET.seen.size > 300) NET.seen.delete(NET.seen.values().next().value);
+        addChatLine((String(m.nick||'?').slice(0,12)) + ' ⚡', String(m.text||'').slice(0,120), 'real');
+      } else if (topic === NET.base + '/pos'){
+        const lat = +m.lat, lng = +m.lng;
+        if (!isFinite(lat) || !isFinite(lng)) return;
+        const nick = String(m.nick||'?').slice(0,12).toUpperCase();
+        let u = NET.users[m.id];
+        if (!u){
+          u = NET.users[m.id] = {
+            marker: L.marker([lat,lng], { icon: icoUser(nick), zIndexOffset: 900 }).addTo(map),
+            ts: Date.now(), nick,
+          };
+          u.marker.bindTooltip(esc(nick), { permanent:true, direction:'bottom', offset:[0,16], className:'nick-tip' });
+          u.marker.on('click', () => {
+            const p = u.marker.getLatLng();
+            const d = S.me ? fmtDist(distM(p, S.me)) : '???';
+            u.marker.bindPopup(`<div class="pp"><b>◈ TRACER ${esc(u.nick)}</b>UTENTE REALE CONNESSO<br>DIST: ${d}</div>`).openPopup();
+            beep(700);
+          });
+        }
+        u.ts = Date.now();
+        if (u.nick !== nick){ u.nick = nick; u.marker.setTooltipContent(esc(nick)); }
+        u.marker.setLatLng([lat,lng]);
+      }
+    });
+  }catch(e){ setNet(false); }
+}
+function pubPresence(force){
+  if (!NET.ok || !NET.client || !S.me || !NET.gpsReal) return;
+  const now = Date.now();
+  if (!force && now - NET.lastPub < 8000) return;
+  NET.lastPub = now;
+  NET.client.publish(NET.base + '/pos', JSON.stringify({
+    id: NET.id, nick: myNick(),
+    lat: +S.me[0].toFixed(4), lng: +S.me[1].toFixed(4), ts: now,
+  }));
+}
+setInterval(() => pubPresence(false), 10000);
+setInterval(() => {
+  const now = Date.now();
+  for (const [id,u] of Object.entries(NET.users)){
+    if (now - u.ts > 60000){ map.removeLayer(u.marker); delete NET.users[id]; }
+  }
+}, 10000);
+netConnect();
+
+/* invio messaggi chat reali */
+let lastSend = 0;
+function sendChat(){
+  const inp = $('chatText');
+  const text = inp.value.trim().slice(0,120);
+  if (!text) return;
+  const now = Date.now();
+  if (now - lastSend < 1500){ toast('ASPETTA UN ATTIMO...'); return; }
+  lastSend = now;
+  addChatLine(myNick() + ' (TU)', text, 'me');
+  if (NET.ok && NET.client){
+    const k = NET.id + '-' + now;
+    NET.seen.add(k);
+    NET.client.publish(NET.base + '/chat', JSON.stringify({ id: NET.id, k, nick: myNick(), text, ts: now }));
+  } else {
+    toast('RETE OFFLINE · MESSAGGIO SOLO LOCALE');
+  }
+  inp.value = '';
+  beep(840,.06);
+}
+$('chatSend').onclick = sendChat;
+$('chatText').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
 
 /* ---------- controlli ---------- */
 $('btnChat').onclick    = () => { $('panelChat').classList.add('open'); $('panelArchive').classList.remove('open'); beep(750); };

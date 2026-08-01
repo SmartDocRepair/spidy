@@ -1,4 +1,4 @@
-const CACHE = 'smt1-v3';
+const CACHE = 'smt1-v4';
 const SHELL = [
   '.',
   'index.html',
@@ -6,6 +6,7 @@ const SHELL = [
   'icon.svg',
   'vendor/leaflet/leaflet.css',
   'vendor/leaflet/leaflet.js',
+  'vendor/mqtt/mqtt.min.js',
   'vendor/fonts/press-start-2p-latin-400-normal.woff2',
 ];
 
