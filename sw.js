@@ -1,10 +1,11 @@
-const CACHE = 'smt1-v5';
+const CACHE = 'smt1-v6';
 const SHELL = [
   '.',
   'index.html',
   'manifest.webmanifest',
   'icon.svg',
   'assets/spidey.png',
+  'assets/mask.png',
   'vendor/leaflet/leaflet.css',
   'vendor/leaflet/leaflet.js',
   'vendor/mqtt/mqtt.min.js',
