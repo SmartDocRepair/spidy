@@ -356,6 +356,47 @@
   }
   .loader .lbadge svg{ width:42px; height:42px; }
 
+  /* ============ wizard di primo avvio ============ */
+  .tut{ position:fixed; inset:0; z-index:3000; display:none; }
+  .tut.on{ display:block; }
+  .tut .hole{
+    position:fixed; border:4px dashed var(--orange); border-radius:50%;
+    box-shadow:0 0 0 9999px rgba(7,9,28,.82);
+    transition:left .25s steps(6), top .25s steps(6), width .25s steps(6), height .25s steps(6);
+    pointer-events:none;
+    animation:tutpulse 1.2s steps(2) infinite;
+  }
+  @keyframes tutpulse{ 50%{ border-color:#ffd9a0; } }
+  .tut .arr{
+    position:fixed; width:0; height:0; pointer-events:none;
+    border-left:13px solid transparent; border-right:13px solid transparent;
+    border-top:20px solid var(--orange);
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,.6));
+    animation:tutbounce .8s steps(3) infinite;
+  }
+  .tut .arr.up{ border-top:none; border-bottom:20px solid var(--orange); }
+  @keyframes tutbounce{ 50%{ margin-top:6px; } }
+  .tut .card{
+    position:fixed; width:min(300px, calc(100vw - 24px));
+    background:var(--paper); color:var(--ink);
+    border:var(--px) solid var(--ink);
+    box-shadow:6px 6px 0 rgba(0,0,0,.55), inset 2px 2px 0 #fff;
+    padding:13px 14px; font-size:8px; line-height:2; letter-spacing:.5px;
+  }
+  .tut .card b{ color:var(--red); display:block; margin-bottom:6px; font-size:9px; }
+  .tut .btns{ display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+  .tut .btns button{
+    font-size:8px; padding:9px 12px 8px; border:var(--px) solid var(--ink); border-radius:10px;
+    background:var(--orange); color:var(--ink);
+    box-shadow: inset 2px 2px 0 var(--orange-hi), inset -2px -2px 0 var(--orange-lo);
+  }
+  .tut .btns button:active{ transform:translateY(1px); }
+  .tut .btns #tutSkip{ background:var(--grey); color:#3c4263;
+    box-shadow: inset 2px 2px 0 var(--grey-hi), inset -2px -2px 0 var(--grey-lo); }
+  .tut .dots{ display:flex; gap:5px; margin-top:10px; }
+  .tut .dots i{ width:8px; height:8px; background:var(--grey); border:2px solid var(--ink); }
+  .tut .dots i.on{ background:var(--orange); }
+
   @media (max-width:420px){
     .timer .d{ font-size:8px; min-width:15px; padding:4px 3px; }
     .maskred{ width:46px; height:46px; }
@@ -460,6 +501,19 @@
   </div>
 
 </div>
+</div>
+
+<div class="tut" id="tut">
+  <div class="hole" id="tutHole"></div>
+  <div class="arr" id="tutArr"></div>
+  <div class="card" id="tutCard">
+    <div id="tutTxt"></div>
+    <div class="dots" id="tutDots"></div>
+    <div class="btns">
+      <button id="tutSkip">SALTA</button>
+      <button id="tutNext">AVANTI</button>
+    </div>
+  </div>
 </div>
 
 <script src="vendor/leaflet/leaflet.js"></script>
@@ -706,6 +760,7 @@ function onFix(lat, lng, acc){
     $('loader').style.display = 'none';
     spawnWorld();
     setTimeout(()=> newSighting(true), 2500);
+    setTimeout(()=> startTutorial(false), 900);
   }
   try{ NET.gpsReal = true; pubPresence(false); }catch(e){}
 }
@@ -717,6 +772,7 @@ function gpsFail(){
     spawnWorld();
     toast('GPS NON DISPONIBILE · POSIZIONE DEMO (ROMA)', 4000);
     setTimeout(()=> newSighting(true), 2500);
+    setTimeout(()=> startTutorial(false), 900);
   }
 }
 if ('geolocation' in navigator){
@@ -948,8 +1004,84 @@ document.addEventListener('pointerdown', () => {
 $('keyT').onclick = () => { S.track = !S.track; $('keyT').classList.toggle('on', S.track); beep(880); toast(S.track?'TRACKING CONTATTO PIÙ VICINO':'TRACKING OFF'); };
 $('bigEye').onclick = () => newSighting(true);
 
+/* ---------- wizard di primo avvio ---------- */
+const TUT_STEPS = [
+  { target:null,
+    text:'<b>⚠ AVVISO — È UN GIOCO</b>SMT-1 mostra sulla mappa la posizione reale degli utenti connessi (solo mentre l\'app è aperta e con GPS attivo). Ti consigliamo di NON scambiare dati personali veri in chat: niente nomi completi, indirizzi o contatti.' },
+  { target:'nick',
+    text:'<b>👉 CAMBIA IL TUO NICKNAME QUI</b>È il nome che gli altri tracer vedranno sulla mappa e in chat. Toccalo e scrivi il tuo.' },
+  { target:'bigEye',
+    text:'<b>SEGNALA SPIDY</b>Hai avvistato Spidy? TOCCA L\'OCCHIONE: parte un NEW SIGHTING con banner e posizione per tutti.' },
+  { target:'btnChat',
+    text:'<b>CHAT TRA UTENTI</b>Da qui parli con gli altri connessi: i messaggi veri hanno il simbolo ⚡, gli altri sono della rete simulata. Ricorda: niente dati reali!' },
+];
+let tutStep = 0, tutOn = false;
+function tutShow(i){
+  tutStep = i;
+  const step = TUT_STEPS[i];
+  const hole = $('tutHole'), card = $('tutCard'), arr = $('tutArr');
+  $('tutTxt').innerHTML = step.text;
+  $('tutDots').innerHTML = TUT_STEPS.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('');
+  $('tutNext').textContent = i === TUT_STEPS.length-1 ? 'FINE' : 'AVANTI';
+  const pad = 14;
+  if (step.target){
+    const r = $(step.target).getBoundingClientRect();
+    hole.style.left = (r.left - pad) + 'px';
+    hole.style.top = (r.top - pad) + 'px';
+    hole.style.width = (r.width + pad*2) + 'px';
+    hole.style.height = (r.height + pad*2) + 'px';
+    const cx = r.left + r.width/2;
+    const below = (r.top + r.height/2) < innerHeight/2;
+    card.style.left = Math.max(10, Math.min(cx - 150, innerWidth - card.offsetWidth - 10)) + 'px';
+    card.style.top = '-1000px';
+    // due passaggi: prima misura l'altezza reale della card, poi posiziona
+    requestAnimationFrame(() => {
+      const ch = card.offsetHeight;
+      card.style.top = (below ? r.bottom + pad + 34 : r.top - pad - 34 - ch) + 'px';
+      arr.style.display = 'block';
+      arr.className = 'arr' + (below ? ' up' : '');
+      arr.style.left = (cx - 13) + 'px';
+      arr.style.top = (below ? r.bottom + pad + 6 : r.top - pad - 28) + 'px';
+    });
+  } else {
+    hole.style.left = '50vw'; hole.style.top = '45vh';
+    hole.style.width = '0px'; hole.style.height = '0px';
+    arr.style.display = 'none';
+    card.style.left = Math.max(10, (innerWidth - 300)/2) + 'px';
+    card.style.top = '-1000px';
+    requestAnimationFrame(() => {
+      card.style.top = Math.max(20, (innerHeight - card.offsetHeight)/2 - 40) + 'px';
+    });
+  }
+}
+function startTutorial(force){
+  if (!force && localStorage.getItem('smt1-tut') === '1') return;
+  if (tutOn) return;
+  tutOn = true;
+  $('tut').classList.add('on');
+  tutShow(0);
+}
+function endTutorial(){
+  tutOn = false;
+  $('tut').classList.remove('on');
+  localStorage.setItem('smt1-tut', '1');
+  toast('BUONA CACCIA, TRACER!');
+}
+$('tutNext').onclick = () => {
+  beep(880);
+  if (tutStep >= TUT_STEPS.length-1) endTutorial();
+  else tutShow(tutStep+1);
+};
+$('tutSkip').onclick = () => { beep(440); endTutorial(); };
+/* la maschera bianca in alto a sinistra rilancia il tutorial */
+$('maskWhite').style.cursor = 'pointer';
+$('maskWhite').addEventListener('click', () => { beep(750); startTutorial(true); });
+
 /* dopo cambi orientamento la mappa deve ricalcolare le dimensioni */
-window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 250));
+window.addEventListener('resize', () => setTimeout(() => {
+  map.invalidateSize();
+  if (tutOn) tutShow(tutStep);
+}, 250));
 
 /* ---------- pwa ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:'){

@@ -1,4 +1,4 @@
-const CACHE = 'smt1-v6';
+const CACHE = 'smt1-v7';
 const SHELL = [
   '.',
   'index.html',

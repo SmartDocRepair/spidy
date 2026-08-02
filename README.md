@@ -28,6 +28,9 @@ dall'app) e **segnalini gialli** (segnalazioni di altri utenti, anch'esse simula
 - 💬 **Chat vera + fake**: i messaggi della "rete avvistatori" simulata continuano ad arrivare,
   ma puoi scrivere davvero — i messaggi reali (contrassegnati da ⚡) raggiungono tutti i connessi.
 - 🪪 **Nickname**: si imposta nel riquadro in alto a sinistra, salvato sul dispositivo.
+- 🧭 **Wizard di primo avvio**: al primo accesso un tutorial cerchia i comandi principali
+  (nickname, segnalazione avvistamenti, chat) e mostra l'avviso sulla condivisione della
+  posizione; si può rivedere toccando la maschera bianca in alto a sinistra.
 - 🎮 **UI pixel completa**: font Press Start 2P, cornice pervinca, scanline, pulsanti a rilievo.
 - 📱 **PWA**: installabile su Android (e su iPhone via "Aggiungi a Home"), con service worker
   per l'avvio offline della shell (le tile della mappa restano sempre di rete).
