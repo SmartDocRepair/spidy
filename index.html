@@ -204,26 +204,25 @@
 
   /* pupazzetto Spider-Man sull'ottagono grigio: angolo in basso a sinistra */
   .pupo{
-    position:absolute; z-index:955; left:-10px; bottom:-10px;
-    width:74px; height:86px; background:none; padding:0;
+    position:absolute; z-index:955; left:-6px; bottom:-8px;
+    width:88px; height:150px; background:none; padding:0;
   }
   .pupo .octobg{
-    position:absolute; left:6px; bottom:0;
-    width:62px; height:62px;
+    position:absolute; left:8px; bottom:0;
+    width:60px; height:60px;
     background:var(--grey-hi);
     clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
     border:3px solid var(--ink);
     box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--grey-lo);
   }
   .pupo .octobg::before{
-    content:'+'; position:absolute; right:8px; top:6px;
-    color:var(--red); font-size:13px; font-family:'Press Start 2P',monospace;
+    content:'+'; position:absolute; right:7px; top:5px;
+    color:var(--red); font-size:12px; font-family:'Press Start 2P',monospace;
   }
-  .pupo .octobg::after{
-    content:''; position:absolute; right:9px; bottom:12px; width:6px; height:6px;
-    background:var(--red); box-shadow:0 -10px 0 0 transparent; border-radius:1px;
+  .pupo svg{
+    position:absolute; left:0; bottom:2px; width:86px; height:148px;
+    filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45));
   }
-  .pupo svg{ position:absolute; left:0; top:0; width:64px; height:74px; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.4)); }
   .pupo:active{ transform:translateY(2px); }
 
   /* ============ pannello comandi in basso (griglia identica alla foto) ============ */
@@ -379,9 +378,9 @@
     .pill{ font-size:6px; padding:10px 2px 9px; letter-spacing:0; }
     .chip{ font-size:6px; padding:10px 6px 9px; letter-spacing:0; }
     .bottom{ padding-left:62px; gap:6px; }
-    .pupo{ width:66px; height:78px; }
-    .pupo .octobg{ width:56px; height:56px; }
-    .pupo svg{ width:58px; height:68px; }
+    .pupo{ width:78px; height:132px; }
+    .pupo .octobg{ width:54px; height:54px; }
+    .pupo svg{ width:76px; height:130px; }
   }
   @media (orientation: landscape) and (max-height:500px){
     .console{ max-width:none; }
@@ -507,25 +506,50 @@ const MASKR = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape
 <rect x="9" y="5" width="5" height="4"/><rect x="10" y="4" width="3" height="1"/><rect x="11" y="9" width="2" height="1"/>
 </g>
 <g fill="#8E1F16"><rect x="7" y="2" width="2" height="1"/><rect x="7" y="12" width="2" height="1"/></g></svg>`;
-/* pupazzetto Spider-Man seduto (per l'angolo in basso a sinistra) */
-const PUPO = `<svg viewBox="0 0 20 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-<g fill="#E04330">
-<rect x="6" y="1" width="8" height="7"/><rect x="5" y="2" width="1" height="5"/><rect x="14" y="2" width="1" height="5"/>
-<rect x="7" y="8" width="6" height="1"/>
-<rect x="6" y="9" width="8" height="6"/>
-<rect x="4" y="10" width="2" height="4"/><rect x="14" y="10" width="2" height="4"/>
-<rect x="4" y="15" width="12" height="3"/>
-<rect x="2" y="17" width="4" height="3"/><rect x="14" y="17" width="4" height="3"/>
+/* chibi Spider-Man appeso al filo (angolo in basso a sinistra) */
+const PUPO = `<svg viewBox="0 0 128 212" xmlns="http://www.w3.org/2000/svg">
+<path d="M69 0 V44" fill="none" stroke="#12131c" stroke-width="7" stroke-linecap="round"/>
+<path d="M74 44 C88 58 100 60 108 68 C114 74 112 84 105 81 C100 79 102 72 107 72" fill="none" stroke="#12131c" stroke-width="6.5" stroke-linecap="round"/>
+<g transform="rotate(-14 64 55)">
+  <rect x="52" y="43" width="24" height="24" rx="7" fill="#C71E12" stroke="#12131c" stroke-width="4.5"/>
+  <g stroke="#12131c" stroke-width="2.6" fill="none" opacity=".9">
+    <path d="M60 45 V65"/><path d="M68 45 V65"/><path d="M54 55 H74"/>
+  </g>
 </g>
-<g fill="#8E1F16">
-<rect x="9" y="9" width="2" height="6"/><rect x="6" y="14" width="8" height="1"/>
-<rect x="2" y="19" width="4" height="2"/><rect x="14" y="19" width="4" height="2"/>
+<g transform="rotate(-16 61 70)">
+  <rect x="50" y="64" width="22" height="12" rx="4" fill="#1B6FD8" stroke="#12131c" stroke-width="4.5"/>
 </g>
-<g fill="#fff">
-<rect x="6" y="3" width="3" height="3"/><rect x="7" y="2" width="2" height="1"/>
-<rect x="11" y="3" width="3" height="3"/><rect x="11" y="2" width="2" height="1"/>
+<path d="M54 74 L70 70 L74 82 L58 86 Z" fill="#C71E12" stroke="#12131c" stroke-width="4"/>
+<circle cx="60" cy="132" r="54" fill="#C71E12" stroke="#12131c" stroke-width="5"/>
+<g fill="none" stroke="#12131c" stroke-width="2.2" opacity=".85">
+  <path d="M52 114 L46 88"/>
+  <path d="M52 114 L26 98"/>
+  <path d="M52 114 L12 122"/>
+  <path d="M52 114 L24 148"/>
+  <path d="M52 114 L44 170"/>
+  <path d="M40 100 C36 112 36 124 41 136"/>
+  <path d="M26 110 C23 120 24 132 28 142"/>
+  <path d="M14 126 C13 134 15 142 19 148"/>
 </g>
-<g fill="#1B2044"><rect x="7" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/></g>
+<g fill="#fff" stroke="#12131c" stroke-width="5.5">
+  <ellipse cx="84" cy="106" rx="23" ry="16" transform="rotate(-33 84 106)"/>
+  <ellipse cx="28" cy="136" rx="19" ry="13" transform="rotate(-26 28 136)"/>
+</g>
+<path d="M14 156 C12 147 21 140 31 144 C39 148 41 160 34 169 C25 177 16 167 14 156 Z" fill="#1B6FD8" stroke="#12131c" stroke-width="4.5" stroke-linejoin="round"/>
+<g>
+  <rect x="10" y="172" width="25" height="25" rx="8" fill="#C71E12" stroke="#12131c" stroke-width="4.5"/>
+  <g stroke="#12131c" stroke-width="2.4" fill="none" opacity=".9">
+    <path d="M18 174 V195"/><path d="M27 174 V195"/><path d="M12 184 H33"/>
+  </g>
+</g>
+<ellipse cx="94" cy="140" rx="11" ry="13" fill="#C71E12" stroke="#12131c" stroke-width="4.5" transform="rotate(-28 94 140)"/>
+<path d="M46 158 C56 152 64 156 68 166 C70 178 64 190 52 192 C44 182 42 168 46 158 Z" fill="#C71E12" stroke="#12131c" stroke-width="4.5" stroke-linejoin="round"/>
+<g stroke="#7a1408" stroke-width="2" fill="none" opacity=".8">
+  <path d="M52 158 C54 168 56 178 58 186"/>
+  <path d="M46 170 C52 173 58 174 64 173"/>
+</g>
+<path d="M62 150 C76 140 96 142 106 154 C114 166 110 180 96 182 C80 184 66 170 62 150 Z" fill="#1B6FD8" stroke="#12131c" stroke-width="4.5" stroke-linejoin="round"/>
+<path d="M70 176 C78 184 90 188 100 186 C104 194 98 202 88 202 C76 202 66 192 62 182 Z" fill="#1B6FD8" stroke="#12131c" stroke-width="4.5" stroke-linejoin="round"/>
 </svg>`;
 document.getElementById('logoTop').innerHTML = SPIDER('#1B2044');
 document.querySelector('.loader .lbadge').innerHTML = SPIDER('#1B2044');
@@ -539,7 +563,7 @@ const S = {
   me: null, meMarker: null, meAcc: null,
   spiders: [], reports: [],
   layerSpiders: null, layerReports: null, layerFx: null,
-  sound: false, track: false, pulse: false, trails: true,
+  sound: localStorage.getItem('smt1-sound') !== '0', track: false, pulse: false, trails: true,
   prof: 1, lastSight: Date.now(), boot: Date.now(),
   spawned: false, sightCount: 0,
 };
@@ -937,7 +961,10 @@ $('btnTerrain').onclick = () => {
   map.removeLayer(TILES[tileMode]);
   tileMode = tileMode === 'wire' ? 'terrain' : 'wire';
   TILES[tileMode].addTo(map);
-  $('map').className = 'mode-' + tileMode;
+  // niente className diretto: cancellerebbe le classi interne di Leaflet
+  // (inclusa .leaflet-container con overflow:hidden) facendo sbordare la mappa
+  $('map').classList.remove('mode-wire', 'mode-terrain');
+  $('map').classList.add('mode-' + tileMode);
   $('btnTerrain').classList.toggle('on', tileMode==='terrain');
 };
 $('btn3d').onclick = () => { toast('MODULO 3D OFFLINE'); beep(220,.15); };
@@ -968,7 +995,20 @@ $('chipA2').onclick = () => {
   toast(S.trails ? 'A.2 TRACCE ON' : 'A.2 TRACCE OFF');
 };
 $('key0').onclick = () => { if (S.me) map.setView(S.me, 15); S.track=false; $('keyT').classList.remove('on'); beep(440); toast('VISTA RESET'); };
-$('keyS').onclick = () => { S.sound = !S.sound; $('keyS').classList.toggle('on', S.sound); beep(880); toast(S.sound?'AUDIO ON':'AUDIO OFF'); };
+$('keyS').onclick = () => {
+  S.sound = !S.sound;
+  localStorage.setItem('smt1-sound', S.sound ? '1' : '0');
+  $('keyS').classList.toggle('on', S.sound);
+  beep(880); toast(S.sound?'AUDIO ON':'AUDIO OFF');
+};
+$('keyS').classList.toggle('on', S.sound);
+/* iOS sblocca l'audio solo dopo un gesto: prepara il contesto al primo tocco */
+document.addEventListener('pointerdown', () => {
+  try{
+    const ctx = beep.ctx || (beep.ctx = new (window.AudioContext||window.webkitAudioContext)());
+    if (ctx.state === 'suspended') ctx.resume();
+  }catch(e){}
+}, { once:true });
 $('keyT').onclick = () => { S.track = !S.track; $('keyT').classList.toggle('on', S.track); beep(880); toast(S.track?'TRACKING CONTATTO PIÙ VICINO':'TRACKING OFF'); };
 $('bigEye').onclick = () => newSighting(true);
 
