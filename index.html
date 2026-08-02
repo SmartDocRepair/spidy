@@ -207,18 +207,6 @@
     position:absolute; z-index:955; left:-6px; bottom:-8px;
     width:88px; height:150px; background:none; padding:0;
   }
-  .pupo .octobg{
-    position:absolute; left:8px; bottom:0;
-    width:60px; height:60px;
-    background:var(--grey-hi);
-    clip-path: polygon(28% 0,72% 0,100% 28%,100% 72%,72% 100%,28% 100%,0 72%,0 28%);
-    border:3px solid var(--ink);
-    box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--grey-lo);
-  }
-  .pupo .octobg::before{
-    content:'+'; position:absolute; right:7px; top:5px;
-    color:var(--red); font-size:12px; font-family:'Press Start 2P',monospace;
-  }
   .pupo img{
     position:absolute; left:0; bottom:2px; width:86px; height:135px;
     object-fit:contain; pointer-events:none;
@@ -380,7 +368,6 @@
     .chip{ font-size:6px; padding:10px 6px 9px; letter-spacing:0; }
     .bottom{ padding-left:62px; gap:6px; }
     .pupo{ width:78px; height:132px; }
-    .pupo .octobg{ width:54px; height:54px; }
     .pupo img{ width:76px; height:119px; }
   }
   @media (orientation: landscape) and (max-height:500px){
@@ -429,7 +416,6 @@
     </div>
 
     <button class="pupo" id="pupo" aria-label="Spidey">
-      <span class="octobg"></span>
       <img src="assets/spidey.png" alt="">
     </button>
 
